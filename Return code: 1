@@ -1,0 +1,11 @@
+STDOUT:
+
+
+STDERR:
+cat: '"Return': No such file or directory
+cat: 'code:': No such file or directory
+cat: '1"': No such file or directory
+
+
+Return code: 1
+

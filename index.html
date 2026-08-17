@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sandbox App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      (function () {
+        function report(message, source, file) {
+          try {
+            window.parent.postMessage({
+              type: 'sandbox-error',
+              message: String(message || 'Unknown runtime error'),
+              source: String(source || ''),
+              file: String(file || ''),
+              url: window.location.href
+            }, '*');
+          } catch (e) {}
+        }
+        window.addEventListener('error', function (e) {
+          report(e.message, e.error && e.error.stack, e.filename);
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          var reason = e.reason || {};
+          report(reason.message || String(reason), reason.stack, '');
+        });
+        var consoleError = console.error;
+        console.error = function () {
+          try {
+            var args = Array.prototype.slice.call(arguments);
+            report(args.map(function (a) { return typeof a === 'string' ? a : (a && a.message) || JSON.stringify(a); }).join(' '), '', '');
+          } catch (e2) {}
+          consoleError.apply(console, arguments);
+        };
+        // Watch for Vite's error overlay (esbuild/transform/compile errors are DOM-only,
+        // they never fire window.onerror or console.error hooks reliably)
+        (function () {
+          var reported = {};
+          function scan() {
+            try {
+              var overlay = document.querySelector('vite-error-overlay') || document.querySelector('.vite-error-overlay') || document.querySelector('[class*="error-overlay"]');
+              if (!overlay) return;
+              var fileEl = overlay.querySelector('.file, [class*="file"]');
+              var file = fileEl ? (fileEl.textContent || '').trim() : '';
+              var msgEl = overlay.querySelector('.message-body, .message, [class*="message"]') || overlay;
+              var text = (msgEl.textContent || '').trim();
+              if (!text) text = (overlay.textContent || '').trim();
+              if (!text) return;
+              var key = text.slice(0, 300);
+              if (!reported[key]) {
+                reported[key] = true;
+                report(text, '', file);
+              }
+            } catch (e3) {}
+          }
+          scan();
+          if (window.MutationObserver) {
+            var mo = new MutationObserver(function () { scan(); });
+            mo.observe(document.documentElement, { childList: true, subtree: true });
+          } else {
+            setInterval(scan, 800);
+          }
+        })();
+      })();
+    </script>
+  </body>
+</html>

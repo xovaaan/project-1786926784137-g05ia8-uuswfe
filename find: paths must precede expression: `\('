@@ -1,0 +1,14 @@
+STDOUT:
+
+
+STDERR:
+cat: '"find:': No such file or directory
+cat: paths: No such file or directory
+cat: must: No such file or directory
+cat: precede: No such file or directory
+cat: 'expression:': No such file or directory
+cat: '`\\('\''"': No such file or directory
+
+
+Return code: 1
+
